@@ -9,7 +9,7 @@
 
 /* Contenedor escalable */
 .public-scale-wrapper {
-  transform: scale(2.9); /* Aumenta tamaño general */
+  transform: scale(2.6); /* Aumenta tamaño general */
   transform-origin: center;
   display: flex;
   flex-direction: column;
