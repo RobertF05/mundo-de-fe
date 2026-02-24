@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import "./AdminPage.css"
 import logo from "../assets/logo-gris.png"
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function AdminPage() {
   const [isLogged, setIsLogged] = useState(false)
   const [loginPassword, setLoginPassword] = useState("")
@@ -35,9 +37,13 @@ export default function AdminPage() {
   =========================== */
 
   const fetchSummary = async () => {
-    const res = await fetch("http://localhost:3000/api/admin-summary")
-    const data = await res.json()
-    setSummary(data)
+    try {
+      const res = await fetch(`${API_URL}/api/admin-summary`)
+      const data = await res.json()
+      setSummary(data)
+    } catch (error) {
+      showMessage("Error conectando con el servidor", "error")
+    }
   }
 
   useEffect(() => {
@@ -49,16 +55,20 @@ export default function AdminPage() {
   =========================== */
 
   const handleLogin = async () => {
-    const res = await fetch("http://localhost:3000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: loginPassword })
-    })
+    try {
+      const res = await fetch(`${API_URL}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: loginPassword })
+      })
 
-    if (res.ok) {
-      setIsLogged(true)
-    } else {
-      showMessage("Contraseña incorrecta", "error")
+      if (res.ok) {
+        setIsLogged(true)
+      } else {
+        showMessage("Contraseña incorrecta", "error")
+      }
+    } catch {
+      showMessage("Error de conexión", "error")
     }
   }
 
@@ -73,6 +83,11 @@ export default function AdminPage() {
   }
 
   const confirmModal = () => {
+    if (!modalPassword) {
+      showMessage("Debe ingresar la contraseña", "error")
+      return
+    }
+
     modalAction(modalPassword)
     setModalVisible(false)
   }
@@ -82,78 +97,103 @@ export default function AdminPage() {
   =========================== */
 
   const addDonation = async (password) => {
-    const res = await fetch("http://localhost:3000/api/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: Number(amount),
-        password
+    try {
+      const res = await fetch(`${API_URL}/api/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: Number(amount),
+          password
+        })
       })
-    })
 
-    if (!res.ok) {
-      showMessage("No autorizado", "error")
-      return
+      if (!res.ok) {
+        showMessage("No autorizado", "error")
+        return
+      }
+
+      setAmount("")
+      fetchSummary()
+      showMessage("Donación agregada correctamente")
+    } catch {
+      showMessage("Error de conexión", "error")
     }
-
-    setAmount("")
-    fetchSummary()
-    showMessage("Donación agregada correctamente")
   }
 
   const uploadMonth = async (password) => {
-    const res = await fetch("http://localhost:3000/api/upload-month", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password })
-    })
+    try {
+      const res = await fetch(`${API_URL}/api/upload-month`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      })
 
-    if (!res.ok) {
-      showMessage("No autorizado", "error")
-      return
+      if (!res.ok) {
+        showMessage("No autorizado", "error")
+        return
+      }
+
+      fetchSummary()
+      showMessage("Barra de progreso actualizada")
+    } catch {
+      showMessage("Error de conexión", "error")
     }
-
-    fetchSummary()
-    showMessage("Acumulado subido correctamente")
   }
 
   const resetAll = async (password) => {
-    const res = await fetch("http://localhost:3000/api/reset-all", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password })
-    })
+    try {
+      const res = await fetch(`${API_URL}/api/reset-all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      })
 
-    if (!res.ok) {
-      showMessage("No autorizado", "error")
-      return
+      if (!res.ok) {
+        showMessage("No autorizado", "error")
+        return
+      }
+
+      fetchSummary()
+      showMessage("Sistema reiniciado correctamente")
+    } catch {
+      showMessage("Error de conexión", "error")
     }
-
-    fetchSummary()
-    showMessage("Sistema reiniciado correctamente")
   }
 
   const updateGoal = async () => {
-    const res = await fetch("http://localhost:3000/api/update-goal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        password: goalPassword,
-        goal: Number(newGoal)
-      })
-    })
-
-    if (!res.ok) {
-      showMessage("No autorizado", "error")
+    if (!newGoal || !goalPassword) {
+      showMessage("Complete todos los campos", "error")
       return
     }
 
-    setShowGoalForm(false)
-    setNewGoal("")
-    setGoalPassword("")
-    fetchSummary()
-    showMessage("Meta actualizada correctamente")
+    try {
+      const res = await fetch(`${API_URL}/api/update-goal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: goalPassword,
+          goal: Number(newGoal)
+        })
+      })
+
+      if (!res.ok) {
+        showMessage("No autorizado", "error")
+        return
+      }
+
+      setShowGoalForm(false)
+      setNewGoal("")
+      setGoalPassword("")
+      fetchSummary()
+      showMessage("Meta actualizada correctamente")
+    } catch {
+      showMessage("Error de conexión", "error")
+    }
   }
+
+  /* ===========================
+     LOGIN VIEW
+  =========================== */
 
   if (!isLogged) {
     return (
@@ -161,6 +201,7 @@ export default function AdminPage() {
         <div className="admin-card">
           <img src={logo} alt="Logo" className="admin-logo" />
           <h1>Admin Login</h1>
+
           <input
             type="password"
             placeholder="Contraseña"
@@ -168,7 +209,11 @@ export default function AdminPage() {
             value={loginPassword}
             onChange={(e) => setLoginPassword(e.target.value)}
           />
-          <button className="admin-button btn-primary" onClick={handleLogin}>
+
+          <button
+            className="admin-button btn-primary"
+            onClick={handleLogin}
+          >
             Ingresar
           </button>
 
@@ -188,6 +233,10 @@ export default function AdminPage() {
     summary.goal > 0
       ? (summary.grandTotal / summary.goal) * 100
       : 0
+
+  /* ===========================
+     PANEL ADMIN
+  =========================== */
 
   return (
     <div className="admin-container">
@@ -214,7 +263,7 @@ export default function AdminPage() {
 
         <hr />
 
-        {/* SECCIÓN ACUMULADO */}
+        {/* ACUMULADO */}
         <div className="section-box">
           <h3>Agregar al acumulado</h3>
           <input
@@ -232,7 +281,7 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* SECCIÓN PROGRESO */}
+        {/* PROGRESO */}
         <div className="section-box">
           <h3>Subir acumulado al progreso total</h3>
           <button
@@ -287,6 +336,7 @@ export default function AdminPage() {
         )}
       </div>
 
+      {/* MODAL */}
       {modalVisible && (
         <div className="modal-overlay">
           <div className="modal-box">
@@ -298,7 +348,10 @@ export default function AdminPage() {
               onChange={(e) => setModalPassword(e.target.value)}
             />
             <div className="modal-buttons">
-              <button className="admin-button btn-primary" onClick={confirmModal}>
+              <button
+                className="admin-button btn-primary"
+                onClick={confirmModal}
+              >
                 Confirmar
               </button>
               <button
