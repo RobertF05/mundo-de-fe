@@ -25,30 +25,40 @@ export default function PublicPage() {
 
   return (
     <div className="public-container">
-      <img src={logo} alt="Logo" className="public-logo" />
+      <div className="public-scale-wrapper">
+        <img src={logo} alt="Logo" className="public-logo" />
 
-      <div className="progress-wrapper">
-        <div className="progress-bar-public">
-          <div
-            className="progress-fill-public"
-            style={{ width: `${percentage}%` }}
-          />
+        <div className="progress-wrapper">
+          <div className="progress-bar-public">
+            <div
+              className="progress-fill-public"
+              style={{ width: `${percentage}%` }}
+            >
+              {percentage >= 12 && (
+                <span className="percentage-inside">
+                  {formattedPercentage}%
+                </span>
+              )}
+            </div>
+          </div>
+
+          {percentage < 12 && (
+            <div
+              className="percentage-badge"
+              style={{ left: `${percentage}%` }}
+            >
+              {formattedPercentage}%
+            </div>
+          )}
         </div>
 
-        <div
-          className="percentage-badge"
-          style={{ left: `${percentage}%` }}
-        >
-          {formattedPercentage}%
-        </div>
-      </div>
-
-      <div className="info-box">
-        <div className="info-left">
-          META: ${goal.toLocaleString()}
-        </div>
-        <div className="info-right">
-          FONDO: ${total.toLocaleString()}
+        <div className="info-box">
+          <div className="info-left">
+            META: ${goal.toLocaleString()}
+          </div>
+          <div className="info-right">
+            FONDO: ${total.toLocaleString()}
+          </div>
         </div>
       </div>
     </div>

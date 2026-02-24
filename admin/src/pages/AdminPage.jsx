@@ -4,6 +4,20 @@ import logo from "../assets/logo-gris.png"
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// ===========================
+// FUNCIONES DE FORMATO
+// ===========================
+
+const formatNumber = (value) => {
+  if (!value) return ""
+  const number = value.toString().replace(/,/g, "")
+  return Number(number).toLocaleString("en-US")
+}
+
+const unformatNumber = (value) => {
+  return value.replace(/,/g, "")
+}
+
 export default function AdminPage() {
   const [isLogged, setIsLogged] = useState(false)
   const [loginPassword, setLoginPassword] = useState("")
@@ -23,7 +37,7 @@ export default function AdminPage() {
   const [goalPassword, setGoalPassword] = useState("")
 
   /* ===========================
-     MENSAJES PERSONALIZADOS
+     MENSAJES
   =========================== */
 
   const showMessage = (text, type = "success") => {
@@ -73,7 +87,7 @@ export default function AdminPage() {
   }
 
   /* ===========================
-     MODAL PARA CONTRASEÑAS
+     MODAL
   =========================== */
 
   const openModal = (action) => {
@@ -228,14 +242,14 @@ export default function AdminPage() {
   }
 
   if (!summary) {
-  return (
-    <div className="admin-container">
-      <div className="admin-card">
-        <p style={{ color: "#fff" }}>Cargando...</p>
+    return (
+      <div className="admin-container">
+        <div className="admin-card">
+          <p style={{ color: "#fff" }}>Cargando...</p>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   const progress =
     summary.goal > 0
@@ -258,9 +272,9 @@ export default function AdminPage() {
           </div>
         )}
 
-        <h2>Total mensual: ${summary.grandTotal}</h2>
-        <h3>Acumulado actual: ${summary.tempTotal}</h3>
-        <h3>Meta: ${summary.goal}</h3>
+        <h2>Total mensual: ${formatNumber(summary.grandTotal)}</h2>
+        <h3>Acumulado actual: ${formatNumber(summary.tempTotal)}</h3>
+        <h3>Meta: ${formatNumber(summary.goal)}</h3>
 
         <div className="progress-bar">
           <div
@@ -271,15 +285,19 @@ export default function AdminPage() {
 
         <hr />
 
-        {/* ACUMULADO */}
         <div className="section-box">
           <h3>Agregar al acumulado</h3>
           <input
-            type="number"
+            type="text"
             placeholder="Cantidad"
             className="admin-input"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={formatNumber(amount)}
+            onChange={(e) => {
+              const raw = unformatNumber(e.target.value)
+              if (/^\d*$/.test(raw)) {
+                setAmount(raw)
+              }
+            }}
           />
           <button
             className="admin-button btn-primary"
@@ -289,7 +307,6 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* PROGRESO */}
         <div className="section-box">
           <h3>Subir acumulado al progreso total</h3>
           <button
@@ -321,11 +338,16 @@ export default function AdminPage() {
         {showGoalForm && (
           <div className="section-box">
             <input
-              type="number"
+              type="text"
               placeholder="Nueva meta"
               className="admin-input"
-              value={newGoal}
-              onChange={(e) => setNewGoal(e.target.value)}
+              value={formatNumber(newGoal)}
+              onChange={(e) => {
+                const raw = unformatNumber(e.target.value)
+                if (/^\d*$/.test(raw)) {
+                  setNewGoal(raw)
+                }
+              }}
             />
             <input
               type="password"
@@ -344,7 +366,6 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* MODAL */}
       {modalVisible && (
         <div className="modal-overlay">
           <div className="modal-box">
