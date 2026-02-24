@@ -227,7 +227,15 @@ export default function AdminPage() {
     )
   }
 
-  if (!summary) return null
+  if (!summary) {
+  return (
+    <div className="admin-container">
+      <div className="admin-card">
+        <p style={{ color: "#fff" }}>Cargando...</p>
+      </div>
+    </div>
+  )
+}
 
   const progress =
     summary.goal > 0

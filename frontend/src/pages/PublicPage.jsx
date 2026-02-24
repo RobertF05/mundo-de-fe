@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import "./PublicPage.css"
-import logo from "../public/logo-gris.png"
+import logo from "../../public/logo-gris.png"
 
 const API_URL = import.meta.env.VITE_API_URL
 
