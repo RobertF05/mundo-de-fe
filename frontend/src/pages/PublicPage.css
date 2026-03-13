@@ -11,7 +11,7 @@
 /* Contenedor principal */
 .public-scale-wrapper {
   width: 100%;
-  max-width: 500px;
+  max-width: 900px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,7 +19,7 @@
 
 /* LOGO */
 .public-logo {
-  width: 150px;
+  width: 220px;
   margin-bottom: 25px;
 }
 
@@ -31,7 +31,7 @@
 
 .progress-bar-public {
   width: 100%;
-  height: 25px;
+  height: 40px;
   background-color: #2e2e2e;
   border-radius: 30px;
   overflow: hidden;
@@ -82,9 +82,9 @@
 .info-right {
   flex: 1;
   text-align: center;
-  padding: 10px 0;
+  padding: 14px 0;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .info-left {
@@ -100,7 +100,7 @@
 /* RESPONSIVE */
 /* ---------------- */
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
 
   .public-logo {
     width: 120px;
