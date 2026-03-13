@@ -5,12 +5,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
-/* Contenedor escalable */
+/* Contenedor principal */
 .public-scale-wrapper {
-  transform: scale(2.6); /* Aumenta tamaño general */
-  transform-origin: center;
+  width: 100%;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,12 +20,12 @@
 /* LOGO */
 .public-logo {
   width: 150px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 /* PROGRESS */
 .progress-wrapper {
-  width: 400px;
+  width: 100%;
   position: relative;
 }
 
@@ -52,7 +53,7 @@
   transform: translateY(-50%);
   font-weight: bold;
   font-size: 14px;
-  color: black; /* ajusta según tu diseño */
+  color: black;
   white-space: nowrap;
 }
 
@@ -72,7 +73,7 @@
 .info-box {
   margin-top: 20px;
   display: flex;
-  width: 400px;
+  width: 100%;
   border-radius: 30px;
   overflow: hidden;
 }
@@ -81,7 +82,7 @@
 .info-right {
   flex: 1;
   text-align: center;
-  padding: 8px 0;
+  padding: 10px 0;
   font-weight: bold;
   font-size: 14px;
 }
@@ -93,4 +94,55 @@
 
 .info-right {
   background-color: #d9d9d9;
+}
+
+/* ---------------- */
+/* RESPONSIVE */
+/* ---------------- */
+
+@media (max-width: 768px) {
+
+  .public-logo {
+    width: 120px;
+  }
+
+  .progress-bar-public {
+    height: 22px;
+  }
+
+  .percentage-inside {
+    font-size: 12px;
+  }
+
+  .percentage-badge {
+    font-size: 12px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .public-logo {
+    width: 100px;
+  }
+
+  .progress-bar-public {
+    height: 20px;
+  }
+
+  .percentage-inside {
+    font-size: 11px;
+  }
+
+  .percentage-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .info-left,
+  .info-right {
+    font-size: 12px;
+    padding: 8px 0;
+  }
+
 }
