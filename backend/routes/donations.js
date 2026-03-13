@@ -1,5 +1,5 @@
-import express from 'express'
-import { supabase } from '../supabaseClient.js'
+import express from "express"
+import { db } from "../firebaseClient.js"
 
 const router = express.Router()
 
@@ -8,37 +8,58 @@ const RESET_PASSWORD = "123"
 const GOAL_PASSWORD = "123"
 const TRANSACTION_PASSWORD = "123"
 
+const donationsTemp = db.collection("donations_temp")
+const monthlyTotals = db.collection("monthly_totals")
+const goalCollection = db.collection("goal")
+
 // Agregar donación temporal
-router.post('/add', async (req, res) => {
+router.post("/add", async (req, res) => {
+
   const { amount, password } = req.body
 
   if (password !== TRANSACTION_PASSWORD) {
     return res.status(401).json({ message: "No autorizado" })
   }
 
-  const { error } = await supabase
-    .from('donations_temp')
-    .insert([{ amount }])
+  try {
 
-  if (error) return res.status(500).json(error)
+    await donationsTemp.add({
+      amount: Number(amount),
+      created_at: new Date()
+    })
 
-  res.json({ message: 'Donación agregada' })
+    res.json({ message: "Donación agregada" })
+
+  } catch (error) {
+
+    res.status(500).json({ error: "Error agregando donación" })
+
+  }
+
 })
+
 
 // Obtener acumulado temporal
-router.get('/temp-total', async (req, res) => {
-  const { data } = await supabase
-    .from('donations_temp')
-    .select('amount')
+router.get("/temp-total", async (req, res) => {
 
-  const total = data.reduce((sum, d) => sum + Number(d.amount), 0)
+  const snapshot = await donationsTemp.get()
+
+  let total = 0
+
+  snapshot.forEach(doc => {
+    total += doc.data().amount
+  })
 
   res.json({ total })
+
 })
 
+
 // Subir acumulado a mensual
-router.post('/upload-month', async (req, res) => {
+router.post("/upload-month", async (req, res) => {
+
   try {
+
     const { password } = req.body
 
     if (password !== TRANSACTION_PASSWORD) {
@@ -49,166 +70,212 @@ router.post('/upload-month', async (req, res) => {
     const month = now.getMonth() + 1
     const year = now.getFullYear()
 
-    // 1️⃣ Obtener total temporal
-    const { data: tempData, error: tempError } = await supabase
-      .from('donations_temp')
-      .select('amount')
+    const monthId = `${year}-${month}`
 
-    if (tempError) throw tempError
+    // obtener temporal
+    const tempSnapshot = await donationsTemp.get()
 
-    const tempTotal = tempData.reduce(
-      (sum, d) => sum + Number(d.amount),
-      0
-    )
+    let tempTotal = 0
+
+    tempSnapshot.forEach(doc => {
+      tempTotal += doc.data().amount
+    })
 
     if (tempTotal === 0) {
       return res.json({ message: "No hay acumulado para subir" })
     }
 
-    // 2️⃣ Buscar si ya existe registro del mes actual
-    const { data: existingMonth } = await supabase
-      .from('monthly_totals')
-      .select('*')
-      .eq('month', month)
-      .eq('year', year)
-      .maybeSingle()
+    const monthRef = monthlyTotals.doc(monthId)
+    const monthDoc = await monthRef.get()
 
-    if (existingMonth) {
-      // 3️⃣ Si existe → actualizar sumando
-      const newTotal = Number(existingMonth.total_amount) + tempTotal
+    if (monthDoc.exists) {
 
-      await supabase
-        .from('monthly_totals')
-        .update({ total_amount: newTotal })
-        .eq('id', existingMonth.id)
+      const newTotal =
+        monthDoc.data().total_amount + tempTotal
+
+      await monthRef.update({
+        total_amount: newTotal
+      })
 
     } else {
-      // 4️⃣ Si no existe → insertar
-      await supabase
-        .from('monthly_totals')
-        .insert([{
-          month,
-          year,
-          total_amount: tempTotal
-        }])
+
+      await monthRef.set({
+        month,
+        year,
+        total_amount: tempTotal,
+        uploaded_at: new Date()
+      })
+
     }
 
-    // 5️⃣ Reiniciar acumulado
-    await supabase
-      .from('donations_temp')
-      .delete()
-      .not('id', 'is', null)
+    // limpiar temporal
+    const batch = db.batch()
 
-    res.json({ message: 'Acumulado subido correctamente' })
+    tempSnapshot.forEach(doc => {
+      batch.delete(doc.ref)
+    })
+
+    await batch.commit()
+
+    res.json({ message: "Acumulado subido correctamente" })
 
   } catch (error) {
+
     console.error(error)
-    res.status(500).json({ error: "Error al subir acumulado" })
+
+    res.status(500).json({
+      error: "Error al subir acumulado"
+    })
+
   }
+
 })
 
+
 // Obtener total general
-router.get('/grand-total', async (req, res) => {
-  const { data } = await supabase
-    .from('monthly_totals')
-    .select('total_amount')
+router.get("/grand-total", async (req, res) => {
 
-  const total = data.reduce((sum, d) => sum + Number(d.total_amount), 0)
+  const snapshot = await monthlyTotals.get()
 
-  const { data: goalData } = await supabase
-    .from('goal')
-    .select('goal_amount')
-    .single()
+  let total = 0
+
+  snapshot.forEach(doc => {
+    total += doc.data().total_amount
+  })
+
+  const goalDoc = await goalCollection.doc("main").get()
 
   res.json({
     total,
-    goal: goalData.goal_amount
+    goal: goalDoc.data().goal_amount
   })
+
 })
 
-// Obtener resumen completo para admin
-router.get('/admin-summary', async (req, res) => {
+
+// Resumen admin
+router.get("/admin-summary", async (req, res) => {
+
   try {
-    // Acumulado temporal
-    const { data: tempData } = await supabase
-      .from('donations_temp')
-      .select('amount')
 
-    const tempTotal = tempData.reduce(
-      (sum, d) => sum + Number(d.amount),
-      0
-    )
+    const tempSnapshot = await donationsTemp.get()
 
-    // Total mensual acumulado
-    const { data: monthlyData } = await supabase
-      .from('monthly_totals')
-      .select('total_amount')
+    let tempTotal = 0
 
-    const grandTotal = monthlyData.reduce(
-      (sum, d) => sum + Number(d.total_amount),
-      0
-    )
+    tempSnapshot.forEach(doc => {
+      tempTotal += doc.data().amount
+    })
 
-    // Meta
-    const { data: goalData } = await supabase
-      .from('goal')
-      .select('goal_amount')
-      .single()
+    const monthlySnapshot = await monthlyTotals.get()
+
+    let grandTotal = 0
+
+    monthlySnapshot.forEach(doc => {
+      grandTotal += doc.data().total_amount
+    })
+
+    const goalDoc = await goalCollection.doc("main").get()
 
     res.json({
       tempTotal,
       grandTotal,
-      goal: goalData.goal_amount
+      goal: goalDoc.data().goal_amount
     })
 
   } catch (error) {
-    res.status(500).json({ error: "Error obteniendo resumen" })
+
+    res.status(500).json({
+      error: "Error obteniendo resumen"
+    })
+
   }
+
 })
 
-router.post('/login', (req, res) => {
+
+// Login
+router.post("/login", (req, res) => {
+
   const { password } = req.body
 
   if (password === LOGIN_PASSWORD) {
     return res.json({ success: true })
   }
 
-  res.status(401).json({ message: "Contraseña incorrecta" })
+  res.status(401).json({
+    message: "Contraseña incorrecta"
+  })
+
 })
 
-router.post('/reset-all', async (req, res) => {
+
+// Reset todo
+router.post("/reset-all", async (req, res) => {
+
   const { password } = req.body
 
   if (password !== RESET_PASSWORD) {
-    return res.status(401).json({ message: "No autorizado" })
+    return res.status(401).json({
+      message: "No autorizado"
+    })
   }
 
   try {
-    await supabase.from('donations_temp').delete().not('id', 'is', null)
-    await supabase.from('monthly_totals').delete().not('id', 'is', null)
 
-    res.json({ message: "Contador reiniciado" })
+    const tempSnapshot = await donationsTemp.get()
+    const monthlySnapshot = await monthlyTotals.get()
+
+    const batch = db.batch()
+
+    tempSnapshot.forEach(doc => batch.delete(doc.ref))
+    monthlySnapshot.forEach(doc => batch.delete(doc.ref))
+
+    await batch.commit()
+
+    res.json({
+      message: "Contador reiniciado"
+    })
+
   } catch (error) {
-    res.status(500).json({ message: "Error al reiniciar" })
+
+    res.status(500).json({
+      message: "Error al reiniciar"
+    })
+
   }
+
 })
 
-router.post('/update-goal', async (req, res) => {
+
+// Actualizar meta
+router.post("/update-goal", async (req, res) => {
+
   const { password, goal } = req.body
 
   if (password !== GOAL_PASSWORD) {
-    return res.status(401).json({ message: "No autorizado" })
+    return res.status(401).json({
+      message: "No autorizado"
+    })
   }
 
   try {
-    await supabase.from('goal').delete().not('id', 'is', null)
 
-    await supabase.from('goal').insert([{ goal_amount: goal }])
+    await goalCollection.doc("main").set({
+      goal_amount: Number(goal)
+    })
 
-    res.json({ message: "Meta actualizada" })
+    res.json({
+      message: "Meta actualizada"
+    })
+
   } catch (error) {
-    res.status(500).json({ message: "Error actualizando meta" })
+
+    res.status(500).json({
+      message: "Error actualizando meta"
+    })
+
   }
+
 })
 
 export default router
