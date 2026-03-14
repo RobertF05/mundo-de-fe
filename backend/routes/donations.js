@@ -1,18 +1,21 @@
 import express from "express"
-import { db } from "../firebaseClient.js"
+import { getFirestore } from "../firebaseClient.js"
 
 const router = express.Router()
 
-const LOGIN_PASSWORD = "123"
-const RESET_PASSWORD = "123"
-const GOAL_PASSWORD = "123"
-const TRANSACTION_PASSWORD = "123"
+const db = getFirestore()
+
+const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD || "123"
+const RESET_PASSWORD = process.env.RESET_PASSWORD || "123"
+const GOAL_PASSWORD = process.env.GOAL_PASSWORD || "123"
+const TRANSACTION_PASSWORD = process.env.TRANSACTION_PASSWORD || "123"
 
 const donationsTemp = db.collection("donations_temp")
 const monthlyTotals = db.collection("monthly_totals")
 const goalCollection = db.collection("goal")
 
 router.get("/test-firestore", async (req, res) => {
+
   try {
 
     const test = await db.collection("test").add({
@@ -34,7 +37,9 @@ router.get("/test-firestore", async (req, res) => {
     })
 
   }
+
 })
+
 
 // Agregar donación temporal
 router.post("/add", async (req, res) => {
@@ -48,7 +53,7 @@ router.post("/add", async (req, res) => {
   try {
 
     await donationsTemp.add({
-      amount: Number(amount),
+      amount: parseFloat(amount),
       created_at: new Date()
     })
 
@@ -66,15 +71,25 @@ router.post("/add", async (req, res) => {
 // Obtener acumulado temporal
 router.get("/temp-total", async (req, res) => {
 
-  const snapshot = await donationsTemp.get()
+  try {
 
-  let total = 0
+    const snapshot = await donationsTemp.select("amount").get()
 
-  snapshot.forEach(doc => {
-    total += doc.data().amount
-  })
+    let total = 0
 
-  res.json({ total })
+    snapshot.forEach(doc => {
+      total += doc.data().amount
+    })
+
+    res.json({ total })
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: "Error obteniendo total temporal"
+    })
+
+  }
 
 })
 
@@ -96,8 +111,7 @@ router.post("/upload-month", async (req, res) => {
 
     const monthId = `${year}-${month}`
 
-    // obtener temporal
-    const tempSnapshot = await donationsTemp.get()
+    const tempSnapshot = await donationsTemp.select("amount").get()
 
     let tempTotal = 0
 
@@ -114,8 +128,7 @@ router.post("/upload-month", async (req, res) => {
 
     if (monthDoc.exists) {
 
-      const newTotal =
-        monthDoc.data().total_amount + tempTotal
+      const newTotal = monthDoc.data().total_amount + tempTotal
 
       await monthRef.update({
         total_amount: newTotal
@@ -132,7 +145,6 @@ router.post("/upload-month", async (req, res) => {
 
     }
 
-    // limpiar temporal
     const batch = db.batch()
 
     tempSnapshot.forEach(doc => {
@@ -159,20 +171,30 @@ router.post("/upload-month", async (req, res) => {
 // Obtener total general
 router.get("/grand-total", async (req, res) => {
 
-  const snapshot = await monthlyTotals.get()
+  try {
 
-  let total = 0
+    const snapshot = await monthlyTotals.select("total_amount").get()
 
-  snapshot.forEach(doc => {
-    total += doc.data().total_amount
-  })
+    let total = 0
 
-  const goalDoc = await goalCollection.doc("main").get()
+    snapshot.forEach(doc => {
+      total += doc.data().total_amount
+    })
 
-  res.json({
-    total,
-    goal: goalDoc.data().goal_amount
-  })
+    const goalDoc = await goalCollection.doc("main").get()
+
+    res.json({
+      total,
+      goal: goalDoc.data().goal_amount
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: "Error obteniendo total general"
+    })
+
+  }
 
 })
 
@@ -182,7 +204,7 @@ router.get("/admin-summary", async (req, res) => {
 
   try {
 
-    const tempSnapshot = await donationsTemp.get()
+    const tempSnapshot = await donationsTemp.select("amount").get()
 
     let tempTotal = 0
 
@@ -190,7 +212,7 @@ router.get("/admin-summary", async (req, res) => {
       tempTotal += doc.data().amount
     })
 
-    const monthlySnapshot = await monthlyTotals.get()
+    const monthlySnapshot = await monthlyTotals.select("total_amount").get()
 
     let grandTotal = 0
 
@@ -285,7 +307,7 @@ router.post("/update-goal", async (req, res) => {
   try {
 
     await goalCollection.doc("main").set({
-      goal_amount: Number(goal)
+      goal_amount: parseFloat(goal)
     })
 
     res.json({
