@@ -12,6 +12,30 @@ const donationsTemp = db.collection("donations_temp")
 const monthlyTotals = db.collection("monthly_totals")
 const goalCollection = db.collection("goal")
 
+router.get("/test-firestore", async (req, res) => {
+  try {
+
+    const test = await db.collection("test").add({
+      message: "conexion exitosa",
+      date: new Date()
+    })
+
+    res.json({
+      success: true,
+      id: test.id
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      error: error.message
+    })
+
+  }
+})
+
 // Agregar donación temporal
 router.post("/add", async (req, res) => {
 
