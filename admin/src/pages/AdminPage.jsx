@@ -4,10 +4,6 @@ import logo from "../assets/logo-gris.png"
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// ===========================
-// FUNCIONES DE FORMATO
-// ===========================
-
 const formatNumber = (value) => {
   if (!value) return ""
   const number = value.toString().replace(/,/g, "")
@@ -36,19 +32,11 @@ export default function AdminPage() {
   const [newGoal, setNewGoal] = useState("")
   const [goalPassword, setGoalPassword] = useState("")
 
-  /* ===========================
-     MENSAJES
-  =========================== */
-
   const showMessage = (text, type = "success") => {
     setMessage(text)
     setMessageType(type)
     setTimeout(() => setMessage(null), 3000)
   }
-
-  /* ===========================
-     RESUMEN
-  =========================== */
 
   const fetchSummary = async () => {
     try {
@@ -63,10 +51,6 @@ export default function AdminPage() {
   useEffect(() => {
     if (isLogged) fetchSummary()
   }, [isLogged])
-
-  /* ===========================
-     LOGIN
-  =========================== */
 
   const handleLogin = async () => {
     try {
@@ -86,10 +70,6 @@ export default function AdminPage() {
     }
   }
 
-  /* ===========================
-     MODAL
-  =========================== */
-
   const openModal = (action) => {
     setModalAction(() => action)
     setModalPassword("")
@@ -105,10 +85,6 @@ export default function AdminPage() {
     modalAction(modalPassword)
     setModalVisible(false)
   }
-
-  /* ===========================
-     ACCIONES
-  =========================== */
 
   const addDonation = async (password) => {
     try {
@@ -205,10 +181,6 @@ export default function AdminPage() {
     }
   }
 
-  /* ===========================
-     LOGIN VIEW
-  =========================== */
-
   if (!isLogged) {
     return (
       <div className="admin-container">
@@ -255,10 +227,6 @@ export default function AdminPage() {
     summary.goal > 0
       ? (summary.grandTotal / summary.goal) * 100
       : 0
-
-  /* ===========================
-     PANEL ADMIN
-  =========================== */
 
   return (
     <div className="admin-container">

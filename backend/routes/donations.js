@@ -14,6 +14,7 @@ const donationsTemp = db.collection("donations_temp")
 const monthlyTotals = db.collection("monthly_totals")
 const goalCollection = db.collection("goal")
 
+//Función de testeo de la BD
 router.get("/test-firestore", async (req, res) => {
 
   try {
@@ -68,7 +69,7 @@ router.post("/add", async (req, res) => {
 })
 
 
-// Obtener acumulado temporal
+// Obtener acumulado temporal (Bolsa Acumulable)
 router.get("/temp-total", async (req, res) => {
 
   try {
@@ -94,7 +95,7 @@ router.get("/temp-total", async (req, res) => {
 })
 
 
-// Subir acumulado a mensual
+// Subir acumulado a mensual (Aumentar Barra de Progreso)
 router.post("/upload-month", async (req, res) => {
 
   try {
