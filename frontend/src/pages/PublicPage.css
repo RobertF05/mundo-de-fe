@@ -5,13 +5,13 @@
   display: flex;
   justify-content: center;
   align-items: flex-start; 
-  padding: 60px 20px; 
+  padding: 30px 20px; 
 }
 
 /* Contenedor principal */
 .public-scale-wrapper {
   width: 90%;
-  max-width: 1600px;
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,13 +19,13 @@
 
 /* LOGO */
 .public-logo {
-  width: 450px;
-  margin-bottom: 30px;
+  width: 200px;
+  margin-bottom: 10px;
 }
 
 .progress-card {
   width: 100%;
-  margin: 30px 0;
+  margin: 10px 0;
   padding: 25px;
   background-color: #2e2e2e;
   border-radius: 30px;
