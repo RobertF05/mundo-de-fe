@@ -4,14 +4,14 @@
   background-color: #3a3a3a;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 20px;
+  align-items: flex-start; 
+  padding: 60px 20px; 
 }
 
 /* Contenedor principal */
 .public-scale-wrapper {
-  width: 100%;
-  max-width: 900px;
+  width: 90%;
+  max-width: 1600px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,8 +19,17 @@
 
 /* LOGO */
 .public-logo {
-  width: 220px;
-  margin-bottom: 25px;
+  width: 450px;
+  margin-bottom: 30px;
+}
+
+.progress-card {
+  width: 100%;
+  margin: 30px 0;
+  padding: 25px;
+  background-color: #2e2e2e;
+  border-radius: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
 /* PROGRESS */
@@ -31,16 +40,16 @@
 
 .progress-bar-public {
   width: 100%;
-  height: 40px;
-  background-color: #2e2e2e;
-  border-radius: 30px;
+  height: 70px; 
+  background-color: #1f1f1f;
+  border-radius: 50px;
   overflow: hidden;
 }
 
 .progress-fill-public {
   height: 100%;
   background-color: #cfcfcf;
-  border-radius: 30px;
+  border-radius: 50px;
   transition: width 0.6s ease;
   position: relative;
 }
@@ -48,101 +57,88 @@
 /* Porcentaje dentro de la barra */
 .percentage-inside {
   position: absolute;
-  right: 10px;
+  left: 50%;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
   font-weight: bold;
-  font-size: 14px;
+  font-size: 36px; 
   color: black;
-  white-space: nowrap;
 }
 
 /* Badge externo */
 .percentage-badge {
-  position: absolute;
-  top: -30px;
-  transform: translateX(-50%);
-  background-color: #d9d9d9;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 14px;
+  top: -55px;
+  font-size: 30px;
+  padding: 10px 20px;
 }
 
 /* INFO */
 .info-box {
-  margin-top: 20px;
+  margin-top: 25px;
   display: flex;
+  flex-direction: column;
   width: 100%;
   border-radius: 30px;
   overflow: hidden;
 }
 
-.info-left,
-.info-right {
-  flex: 1;
+.info-top,
+.info-bottom {
   text-align: center;
-  padding: 14px 0;
+  padding: 30px 0;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 48px; 
 }
 
-.info-left {
+.info-top {
   background-color: #2e2e2e;
   color: white;
 }
 
-.info-right {
+.info-bottom {
   background-color: #d9d9d9;
 }
 
-/* ---------------- */
-/* RESPONSIVE */
-/* ---------------- */
-
+/* 📱 MOBILE OPTIMIZATION */
 @media (max-width: 600px) {
 
+  .public-scale-wrapper {
+    width: 95%;
+  }
+
+  /* LOGO */
   .public-logo {
     width: 120px;
+    margin-bottom: 20px;
   }
 
+  /* PROGRESS CARD */
+  .progress-card {
+    padding: 15px;
+    margin: 20px 0;
+  }
+
+  /* BARRA */
   .progress-bar-public {
-    height: 22px;
+    height: 30px; /* 🔥 mucho más usable */
   }
 
+  /* PORCENTAJE */
   .percentage-inside {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .percentage-badge {
-    font-size: 12px;
+    font-size: 14px;
+    top: -35px;
+    padding: 6px 12px;
   }
 
-}
-
-@media (max-width: 480px) {
-
-  .public-logo {
-    width: 100px;
-  }
-
-  .progress-bar-public {
-    height: 20px;
-  }
-
-  .percentage-inside {
-    font-size: 11px;
-  }
-
-  .percentage-badge {
-    font-size: 11px;
-    padding: 4px 10px;
-  }
-
-  .info-left,
-  .info-right {
-    font-size: 12px;
-    padding: 8px 0;
+  /* INFO BOX */
+  .info-top,
+  .info-bottom {
+    font-size: 20px;
+    padding: 16px 10px;
   }
 
 }

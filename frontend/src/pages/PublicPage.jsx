@@ -28,36 +28,38 @@ export default function PublicPage() {
       <div className="public-scale-wrapper">
         <img src={logo} alt="Logo" className="public-logo" />
 
-        <div className="progress-wrapper">
-          <div className="progress-bar-public">
-            <div
-              className="progress-fill-public"
-              style={{ width: `${percentage}%` }}
-            >
-              {percentage >= 12 && (
-                <span className="percentage-inside">
-                  {formattedPercentage}%
-                </span>
-              )}
+        <div className="progress-card">
+          <div className="progress-wrapper">
+            <div className="progress-bar-public">
+              <div
+                className="progress-fill-public"
+                style={{ width: `${percentage}%` }}
+              >
+                {percentage >= 12 && (
+                  <span className="percentage-inside">
+                    {formattedPercentage}%
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
 
-          {percentage < 12 && (
-            <div
-              className="percentage-badge"
-              style={{ left: `${percentage}%` }}
-            >
-              {formattedPercentage}%
-            </div>
-          )}
+            {percentage < 12 && (
+              <div
+                className="percentage-badge"
+                style={{ left: `${percentage}%` }}
+              >
+                {formattedPercentage}%
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="info-box">
-          <div className="info-left">
+          <div className="info-top">
             META: ${goal.toLocaleString()}
           </div>
-          <div className="info-right">
-            FONDO: ${total.toLocaleString()}
+          <div className="info-bottom">
+            RECAUDADO: ${total.toLocaleString()}
           </div>
         </div>
       </div>
