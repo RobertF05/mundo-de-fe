@@ -76,15 +76,20 @@ export default function AdminPage() {
     setModalVisible(true)
   }
 
-  const confirmModal = () => {
-    if (!modalPassword) {
-      showMessage("Debe ingresar la contraseña", "error")
-      return
-    }
-
-    modalAction(modalPassword)
-    setModalVisible(false)
+  const confirmModal = async () => {
+  if (!modalPassword) {
+    showMessage("Debe ingresar la contraseña", "error")
+    return
   }
+
+  const action = modalAction
+
+  setModalVisible(false)
+
+  await new Promise(resolve => setTimeout(resolve, 0))
+
+  await action(modalPassword)
+}
 
   const addDonation = async (password) => {
     try {

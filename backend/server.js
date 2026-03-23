@@ -10,6 +10,8 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+console.log("ENV TEST:", process.env.FIREBASE_PRIVATE_KEY)
+
 app.get("/health", (req, res) => {
   res.status(200).send("OK")
 })
