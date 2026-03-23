@@ -5,10 +5,10 @@ const router = express.Router()
 
 const db = getFirestore()
 
-const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD || "123"
-const RESET_PASSWORD = process.env.RESET_PASSWORD || "123"
-const GOAL_PASSWORD = process.env.GOAL_PASSWORD || "123"
-const TRANSACTION_PASSWORD = process.env.TRANSACTION_PASSWORD || "123"
+const LOGIN_PASSWORD = process.env.PASSWORD 
+const RESET_PASSWORD = process.env.PASSWORD 
+const GOAL_PASSWORD = process.env.PASSWORD 
+const TRANSACTION_PASSWORD = process.env.PASSWORD 
 
 const donationsTemp = db.collection("donations_temp")
 const monthlyTotals = db.collection("monthly_totals")
