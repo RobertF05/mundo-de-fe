@@ -34,23 +34,15 @@ export default function PublicPage() {
               <div
                 className="progress-fill-public"
                 style={{ width: `${percentage}%` }}
-              >
-                {percentage >= 12 && (
-                  <span className="percentage-inside">
-                    {formattedPercentage}%
-                  </span>
-                )}
-              </div>
+              />
             </div>
 
-            {percentage < 12 && (
-              <div
-                className="percentage-badge"
-                style={{ left: `${percentage}%` }}
-              >
-                {formattedPercentage}%
-              </div>
-            )}
+            <div
+              className="percentage-bubble"
+              style={{ left: `${percentage}%` }}
+            >
+              {formattedPercentage}%
+            </div>
           </div>
         </div>
 
