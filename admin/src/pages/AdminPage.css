@@ -5,6 +5,7 @@
   justify-content: center;
   align-items: center;
   font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
 }
 
 .admin-card {
@@ -20,7 +21,8 @@
 
 /* Logo */
 .admin-logo {
-  width: 120px;
+  width: 100px;
+  height: auto;
   margin-bottom: 20px;
   filter: brightness(1.1);
 }
@@ -29,38 +31,51 @@
 .admin-card h1 {
   margin-bottom: 25px;
   color: #ffffff;
+  font-size: 28px;
 }
 
 .admin-card h2,
 .admin-card h3 {
   color: #d1d1d1;
+  margin: 15px 0;
 }
 
-/* Barra */
+.admin-card h2 {
+  font-size: 24px;
+  color: #ffd700;
+}
+
+/* Barra de progreso */
 .progress-bar {
   width: 100%;
   height: 22px;
   background: #555;
   border-radius: 20px;
   overflow: hidden;
-  margin: 20px 0;
+  margin: 20px 0 10px 0;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #bdbdbd, #ffffff);
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
   transition: width 0.4s ease;
 }
 
 /* Inputs */
 .admin-input {
-  padding: 10px 15px;
+  padding: 12px 15px;
   border-radius: 12px;
   border: none;
   background: #5a5a5a;
   color: white;
   margin: 5px;
   outline: none;
+  font-size: 16px;
+}
+
+.admin-input:focus {
+  background: #6a6a6a;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 .admin-input::placeholder {
@@ -76,6 +91,16 @@
   cursor: pointer;
   transition: 0.3s;
   margin: 5px;
+  font-size: 14px;
+}
+
+.admin-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.admin-button:active {
+  transform: translateY(0);
 }
 
 .btn-primary {
@@ -94,6 +119,24 @@
 
 .btn-danger:hover {
   background: #999;
+}
+
+/* Grupo de input y botones */
+.input-button-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+
+.button-group button {
+  flex: 1;
 }
 
 /* Línea divisoria */
@@ -116,16 +159,30 @@ hr {
   padding: 12px;
   border-radius: 10px;
   font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .system-message.success {
   background: #5a5a5a;
   color: #ffffff;
+  border-left: 4px solid #4caf50;
 }
 
 .system-message.error {
   background: #6b4a4a;
   color: #ffffff;
+  border-left: 4px solid #f44336;
 }
 
 /* Modal */
@@ -135,22 +192,89 @@ hr {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.8);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-box {
   background: #3a3a3a;
   padding: 30px;
   border-radius: 20px;
-  width: 300px;
+  width: 350px;
   text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-box h3 {
+  margin-bottom: 20px;
+  color: #fff;
 }
 
 .modal-buttons {
-  margin-top: 15px;
+  margin-top: 20px;
   display: flex;
   justify-content: space-between;
+  gap: 10px;
+}
+
+.modal-buttons button {
+  flex: 1;
+}
+
+.admin-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.admin-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.admin-row .admin-button {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-card {
+    padding: 20px;
+  }
+  
+  .input-button-group {
+    flex-direction: column;
+  }
+  
+  .button-group {
+    width: 100%;
+  }
+  
+  .admin-card h1 {
+    font-size: 24px;
+  }
+  
+  .admin-card h2 {
+    font-size: 20px;
+  }
+  
+  .admin-card h3 {
+    font-size: 16px;
+  }
 }
