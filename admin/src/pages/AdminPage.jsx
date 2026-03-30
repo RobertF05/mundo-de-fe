@@ -349,8 +349,8 @@ export default function AdminPage() {
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
-        <p style={{ marginTop: "-10px", fontSize: "12px", color: "#ccc" }}>
-          {progress.toFixed(1)}% de la meta alcanzado
+        <p style={{ marginTop: "-10px", fontSize: "20px", font: 'Segoe UI', color: "#ccc" }}>
+          {progress.toFixed(1)}% Alcanzado
         </p>
 
         <hr />
@@ -465,10 +465,10 @@ export default function AdminPage() {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>
               {modalAction === resetTemp
-                ? "⚠️ Eliminar acumulado (irreversible)"
+                ? "Eliminar acumulado (irreversible)"
                 : modalAction === resetAll
-                ? "⚠️ Reiniciar todo el sistema (irreversible)"
-                : "🔐 Ingrese contraseña"}
+                ? "Reiniciar todo el sistema (irreversible)"
+                : "Ingrese contraseña"}
             </h3>
 
             <input
