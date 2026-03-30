@@ -15,7 +15,6 @@ const monthlyTotals = db.collection("monthly_totals")
 const goalCollection = db.collection("goal")
 
 // ========== RUTAS EXISTENTES ==========
-// Función de testeo de la BD
 router.get("/test-firestore", async (req, res) => {
   try {
     const test = await db.collection("test").add({
@@ -29,7 +28,6 @@ router.get("/test-firestore", async (req, res) => {
   }
 })
 
-// Agregar donación temporal
 router.post("/add", async (req, res) => {
   const { amount, password } = req.body
 
@@ -53,7 +51,6 @@ router.post("/add", async (req, res) => {
   }
 })
 
-// Obtener acumulado temporal
 router.get("/temp-total", async (req, res) => {
   try {
     const snapshot = await donationsTemp.get()
@@ -68,9 +65,29 @@ router.get("/temp-total", async (req, res) => {
   }
 })
 
-// ========== NUEVAS RUTAS ADMIN ==========
+// 🔥 RUTA PARA EL FRONTEND PÚBLICO - Esta es la que falta
+router.get("/grand-total", async (req, res) => {
+  try {
+    // Obtener total histórico de monthly_totals
+    const monthlySnapshot = await monthlyTotals.get()
+    let total = 0
+    monthlySnapshot.forEach(doc => {
+      total += doc.data().total_amount
+    })
 
-// Subir acumulado a mensual
+    // Obtener la meta
+    const goalDoc = await goalCollection.doc("main").get()
+    const goal = goalDoc.exists ? goalDoc.data().goal_amount : 0
+
+    res.json({ total, goal })
+  } catch (error) {
+    console.error("Error obteniendo total general:", error)
+    res.status(500).json({ error: "Error obteniendo total general" })
+  }
+})
+
+// ========== RUTAS ADMIN ==========
+
 router.post("/upload-month", async (req, res) => {
   try {
     const { password } = req.body
@@ -84,7 +101,6 @@ router.post("/upload-month", async (req, res) => {
     const year = now.getFullYear()
     const monthId = `${year}-${month}`
 
-    // Obtener todas las donaciones temporales
     const tempSnapshot = await donationsTemp.get()
     let tempTotal = 0
 
@@ -99,7 +115,6 @@ router.post("/upload-month", async (req, res) => {
     const monthRef = monthlyTotals.doc(monthId)
     const monthDoc = await monthRef.get()
 
-    // Actualizar o crear registro mensual
     if (monthDoc.exists) {
       const newTotal = monthDoc.data().total_amount + tempTotal
       await monthRef.update({
@@ -115,7 +130,6 @@ router.post("/upload-month", async (req, res) => {
       })
     }
 
-    // Eliminar todas las donaciones temporales
     const batch = db.batch()
     tempSnapshot.forEach(doc => {
       batch.delete(doc.ref)
@@ -134,7 +148,6 @@ router.post("/upload-month", async (req, res) => {
   }
 })
 
-// Borrar SOLO acumulado temporal
 router.post("/reset-temp", async (req, res) => {
   const { password } = req.body
 
@@ -173,24 +186,20 @@ router.post("/reset-temp", async (req, res) => {
   }
 })
 
-// Resumen admin
 router.get("/admin-summary", async (req, res) => {
   try {
-    // Obtener acumulado temporal
     const tempSnapshot = await donationsTemp.get()
     let tempTotal = 0
     tempSnapshot.forEach(doc => {
       tempTotal += doc.data().amount
     })
 
-    // Obtener total histórico mensual
     const monthlySnapshot = await monthlyTotals.get()
     let grandTotal = 0
     monthlySnapshot.forEach(doc => {
       grandTotal += doc.data().total_amount
     })
 
-    // Obtener meta
     const goalDoc = await goalCollection.doc("main").get()
     const goal = goalDoc.exists ? goalDoc.data().goal_amount : 0
 
@@ -205,7 +214,6 @@ router.get("/admin-summary", async (req, res) => {
   }
 })
 
-// Login
 router.post("/login", (req, res) => {
   const { password } = req.body
 
@@ -216,7 +224,6 @@ router.post("/login", (req, res) => {
   res.status(401).json({ message: "Contraseña incorrecta" })
 })
 
-// Reset todo (reiniciar sistema completo)
 router.post("/reset-all", async (req, res) => {
   const { password } = req.body
 
@@ -240,7 +247,6 @@ router.post("/reset-all", async (req, res) => {
   }
 })
 
-// Actualizar meta
 router.post("/update-goal", async (req, res) => {
   const { password, goal } = req.body
 
@@ -262,6 +268,20 @@ router.post("/update-goal", async (req, res) => {
     console.error("Error actualizando meta:", error)
     res.status(500).json({ message: "Error actualizando meta" })
   }
+})
+
+// Ruta de diagnóstico (opcional)
+router.get("/routes", (req, res) => {
+  const routes = []
+  router.stack.forEach(layer => {
+    if (layer.route) {
+      routes.push({
+        path: layer.route.path,
+        methods: Object.keys(layer.route.methods)
+      })
+    }
+  })
+  res.json({ routes })
 })
 
 export default router
