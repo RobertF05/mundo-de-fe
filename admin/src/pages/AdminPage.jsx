@@ -4,14 +4,160 @@ import logo from "../assets/logo-gris.png"
 
 const API_URL = import.meta.env.VITE_API_URL
 
-const formatNumber = (value) => {
-  if (!value && value !== 0) return ""
-  const number = value.toString().replace(/,/g, "")
-  return Number(number).toLocaleString("en-US")
+// Función para formatear números como moneda - FORZADO a usar comas y punto
+const formatCurrency = (value) => {
+  if (value === null || value === undefined || value === "") return "0.00"
+  
+  // Convertir a número
+  let numValue = typeof value === 'string' ? parseFloat(value.replace(/,/g, '').replace(/\./g, '')) : value
+  
+  if (isNaN(numValue)) return "0.00"
+  
+  // Formato MANUAL para asegurar comas como separadores de miles y punto para decimales
+  const roundedNum = Math.round(numValue * 100) / 100
+  
+  // Separar parte entera y decimal
+  let [integerPart, decimalPart] = roundedNum.toFixed(2).split('.')
+  
+  // Agregar comas a la parte entera (de derecha a izquierda)
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  
+  // Retornar con punto decimal
+  return `${integerPart}.${decimalPart}`
 }
 
-const unformatNumber = (value) => {
-  return value.replace(/,/g, "")
+// Función para limpiar el formato (eliminar comas y convertir punto a decimal)
+const cleanCurrencyString = (value) => {
+  if (!value && value !== 0) return ""
+  // Eliminar comas, mantener solo números y el primer punto
+  let cleaned = value.toString().replace(/,/g, '')
+  // Asegurar que solo hay un punto decimal
+  const parts = cleaned.split('.')
+  if (parts.length > 2) {
+    cleaned = parts[0] + '.' + parts.slice(1).join('')
+  }
+  return cleaned
+}
+
+// Validar y parsear el valor
+const parseAndValidateCurrency = (value) => {
+  if (!value && value !== 0) return null
+  
+  // Si es string, limpiar primero
+  let cleanValue = value
+  if (typeof value === 'string') {
+    cleanValue = cleanCurrencyString(value)
+  }
+  
+  // Convertir a número
+  let numValue = parseFloat(cleanValue)
+  
+  // Validar
+  if (isNaN(numValue)) return null
+  if (numValue < 0) return null
+  
+  // Redondear a 2 decimales
+  numValue = Math.round(numValue * 100) / 100
+  
+  return numValue
+}
+
+// Componente InputMoneda
+const CurrencyInput = ({ value, onChange, placeholder, className, style = {} }) => {
+  const [displayValue, setDisplayValue] = useState("")
+  const [isFocused, setIsFocused] = useState(false)
+  
+  // Actualizar el display cuando el value externo cambia
+  useEffect(() => {
+    if (!isFocused) {
+      if (value && value !== "") {
+        const numValue = typeof value === 'string' ? parseFloat(cleanCurrencyString(value)) : value
+        if (!isNaN(numValue) && numValue !== 0) {
+          setDisplayValue(formatCurrency(numValue))
+        } else {
+          setDisplayValue("")
+        }
+      } else {
+        setDisplayValue("")
+      }
+    }
+  }, [value, isFocused])
+  
+  const handleChange = (e) => {
+    let rawValue = e.target.value
+    
+    // Permitir: dígitos, punto decimal, y teclas de control
+    if (rawValue === "") {
+      setDisplayValue("")
+      if (onChange) onChange("")
+      return
+    }
+    
+    // Validar que solo contenga caracteres válidos para números
+    const isValid = /^\d*\.?\d*$/.test(rawValue)
+    if (!isValid) return
+    
+    // Limitar a 2 decimales mientras escribe
+    const decimalParts = rawValue.split('.')
+    if (decimalParts.length === 2 && decimalParts[1].length > 2) return
+    
+    // Actualizar el display
+    setDisplayValue(rawValue)
+    
+    // Parsear y validar
+    let numValue = parseAndValidateCurrency(rawValue)
+    
+    // Llamar al onChange
+    if (onChange) {
+      onChange(numValue !== null ? numValue : "")
+    }
+  }
+  
+  const handleBlur = () => {
+    setIsFocused(false)
+    
+    // Al perder el foco, formatear el valor
+    if (displayValue && displayValue !== "") {
+      let numValue = parseAndValidateCurrency(displayValue)
+      if (numValue !== null && !isNaN(numValue) && numValue > 0) {
+        const formatted = formatCurrency(numValue)
+        setDisplayValue(formatted)
+        if (onChange) {
+          onChange(numValue)
+        }
+      } else {
+        setDisplayValue("")
+        if (onChange) {
+          onChange("")
+        }
+      }
+    }
+  }
+  
+  const handleFocus = (e) => {
+    setIsFocused(true)
+    // Al hacer foco, mostrar el número sin formato
+    if (value && value !== "") {
+      let numValue = typeof value === 'string' ? parseFloat(cleanCurrencyString(value)) : value
+      if (!isNaN(numValue) && numValue > 0) {
+        let stringValue = numValue.toString()
+        setDisplayValue(stringValue)
+      }
+    }
+  }
+  
+  return (
+    <input
+      type="text"
+      placeholder={placeholder}
+      className={className}
+      style={style}
+      value={displayValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onFocus={handleFocus}
+    />
+  )
 }
 
 export default function AdminPage() {
@@ -28,6 +174,7 @@ export default function AdminPage() {
   const [modalVisible, setModalVisible] = useState(false)
   const [modalPassword, setModalPassword] = useState("")
   const [modalAction, setModalAction] = useState(null)
+  const [modalActionType, setModalActionType] = useState("")
 
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [newGoal, setNewGoal] = useState("")
@@ -92,8 +239,9 @@ export default function AdminPage() {
     }
   }
 
-  const openModal = (action) => {
+  const openModal = (action, actionName) => {
     setModalAction(() => action)
+    setModalActionType(actionName)
     setModalPassword("")
     setModalVisible(true)
   }
@@ -109,7 +257,6 @@ export default function AdminPage() {
 
     try {
       await action(modalPassword)
-      // IMPORTANTE: Esperar a que fetchSummary termine
       await fetchSummary()
     } catch (error) {
       console.error("Error en acción modal:", error)
@@ -118,8 +265,20 @@ export default function AdminPage() {
   }
 
   const addDonation = async (password) => {
-    if (!amount || Number(amount) <= 0) {
-      showMessage("Ingrese una cantidad válida", "error")
+    const amountNumber = parseAndValidateCurrency(amount)
+    
+    if (!amountNumber || amountNumber <= 0) {
+      showMessage("Ingrese una cantidad válida mayor a 0", "error")
+      return
+    }
+
+    if (amountNumber.toString().split('.')[1]?.length > 2) {
+      showMessage("La cantidad no puede tener más de 2 decimales", "error")
+      return
+    }
+
+    if (amountNumber > 999999999.99) {
+      showMessage("El monto excede el límite permitido", "error")
       return
     }
 
@@ -128,7 +287,7 @@ export default function AdminPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Number(amount),
+          amount: amountNumber,
           password
         })
       })
@@ -140,11 +299,11 @@ export default function AdminPage() {
       }
 
       setAmount("")
-      showMessage("Donación agregada correctamente", "success")
+      showMessage(`Donación de $${formatCurrency(amountNumber)} agregada correctamente`, "success")
     } catch (error) {
       console.error("Error en addDonation:", error)
       showMessage("Error de conexión", "error")
-      throw error // Re-lanzar para que confirmModal lo capture
+      throw error
     }
   }
 
@@ -171,42 +330,40 @@ export default function AdminPage() {
   }
 
   const resetTemp = async (password) => {
-  try {
-    const url = `${API_URL}/api/reset-temp`
-    console.log("Llamando a URL:", url) // 🔥 Ver URL exacta
-    
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password })
-    })
+    try {
+      const url = `${API_URL}/api/reset-temp`
+      console.log("Llamando a URL:", url)
+      
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      })
 
-    console.log("Respuesta status:", res.status)
-    console.log("Respuesta headers:", res.headers.get('content-type'))
+      console.log("Respuesta status:", res.status)
 
-    // Verificar si la respuesta es JSON
-    const contentType = res.headers.get('content-type')
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await res.text()
-      console.error("Respuesta no es JSON:", text.substring(0, 200))
-      throw new Error(`El servidor respondió con ${contentType} en lugar de JSON`)
+      const contentType = res.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text()
+        console.error("Respuesta no es JSON:", text.substring(0, 200))
+        throw new Error(`El servidor respondió con ${contentType} en lugar de JSON`)
+      }
+
+      if (!res.ok) {
+        const error = await res.json()
+        showMessage(error.message || "No autorizado", "error")
+        return
+      }
+
+      const data = await res.json()
+      console.log("Reset response:", data)
+      showMessage("Acumulado eliminado correctamente", "success")
+    } catch (error) {
+      console.error("Error en resetTemp:", error)
+      showMessage("Error de conexión: " + error.message, "error")
+      throw error
     }
-
-    if (!res.ok) {
-      const error = await res.json()
-      showMessage(error.message || "No autorizado", "error")
-      return
-    }
-
-    const data = await res.json()
-    console.log("Reset response:", data)
-    showMessage("Acumulado eliminado correctamente", "success")
-  } catch (error) {
-    console.error("Error en resetTemp:", error)
-    showMessage("Error de conexión: " + error.message, "error")
-    throw error
   }
-}
 
   const resetAll = async (password) => {
     try {
@@ -236,13 +393,20 @@ export default function AdminPage() {
       return
     }
 
+    const goalNumber = parseAndValidateCurrency(newGoal)
+    
+    if (!goalNumber || goalNumber <= 0) {
+      showMessage("Ingrese una meta válida mayor a 0", "error")
+      return
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/update-goal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           password: goalPassword,
-          goal: Number(newGoal)
+          goal: goalNumber
         })
       })
 
@@ -255,7 +419,7 @@ export default function AdminPage() {
       setNewGoal("")
       setGoalPassword("")
       await fetchSummary()
-      showMessage("Meta actualizada correctamente", "success")
+      showMessage(`Meta actualizada a $${formatCurrency(goalNumber)}`, "success")
     } catch (error) {
       console.error("Error en updateGoal:", error)
       showMessage("Error de conexión", "error")
@@ -268,6 +432,42 @@ export default function AdminPage() {
     setLoginPassword("")
     setSummary(null)
     showMessage("Sesión cerrada", "success")
+  }
+
+  // Función para obtener el ícono y color según la acción
+  const getModalActionInfo = () => {
+    switch(modalActionType) {
+      case "addDonation":
+        return {
+          title: "Agregar Donación",
+          color: "#28a745",
+          message: "Estás a punto de agregar una nueva donación al acumulado actual."
+        }
+      case "resetTemp":
+        return {
+          title: "Borrar Acumulado",
+          color: "#dc3545",
+          message: "Esta acción ELIMINARÁ TODO el acumulado actual. Esta operación es irreversible."
+        }
+      case "uploadMonth":
+        return {
+          title: "Aumentar Barra de Progreso",
+          color: "#007bff",
+          message: "Moverás el acumulado actual al total histórico. Esta acción no se puede deshacer."
+        }
+      case "resetAll":
+        return {
+          title: "Reiniciar Sistema Completo",
+          color: "#dc3545",
+          message: "Reiniciarás TODO el sistema. Todos los datos se perderán permanentemente."
+        }
+      default:
+        return {
+          title: "Confirmar Acción",
+          color: "#6c757d",
+          message: "Por favor, confirma tu identidad para continuar."
+        }
+    }
   }
 
   if (!isLogged) {
@@ -313,10 +513,11 @@ export default function AdminPage() {
     )
   }
 
-  // Barra de progreso SOLO usa grandTotal (histórico)
   const progress = summary.goal > 0
     ? (summary.grandTotal / summary.goal) * 100
     : 0
+
+  const actionInfo = getModalActionInfo()
 
   return (
     <div className="admin-container">
@@ -339,9 +540,9 @@ export default function AdminPage() {
           </div>
         )}
 
-        <h2>Total recaudado histórico: ${formatNumber(summary.grandTotal)}</h2>
-        <h3>Acumulado actual (sin subir): ${formatNumber(summary.tempTotal)}</h3>
-        <h3>Meta: ${formatNumber(summary.goal)}</h3>
+        <h2>Total recaudado: ${formatCurrency(summary.grandTotal)}</h2>
+        <h3>Acumulado actual (sin subir): ${formatCurrency(summary.tempTotal)}</h3>
+        <h3>Meta: ${formatCurrency(summary.goal)}</h3>
 
         <div className="progress-bar">
           <div
@@ -359,31 +560,25 @@ export default function AdminPage() {
           <h3>Agregar al acumulado</h3>
 
           <div className="input-button-group">
-            <input
-              type="text"
-              placeholder="Cantidad en USD"
+            <CurrencyInput
+              value={amount}
+              onChange={setAmount}
+              placeholder="Ingresar en USD $"
               className="admin-input"
               style={{ flex: 2 }}
-              value={formatNumber(amount)}
-              onChange={(e) => {
-                const raw = unformatNumber(e.target.value)
-                if (/^\d*$/.test(raw)) {
-                  setAmount(raw)
-                }
-              }}
             />
             
             <div className="button-group">
               <button
                 className="admin-button btn-primary"
-                onClick={() => openModal(addDonation)}
+                onClick={() => openModal(addDonation, "addDonation")}
               >
                 Agregar
               </button>
 
               <button
                 className="admin-button btn-danger"
-                onClick={() => openModal(resetTemp)}
+                onClick={() => openModal(resetTemp, "resetTemp")}
               >
                 Borrar Acumulado
               </button>
@@ -395,7 +590,7 @@ export default function AdminPage() {
           <h3>Subir acumulado al progreso total</h3>
           <button
             className="admin-button btn-primary"
-            onClick={() => openModal(uploadMonth)}
+            onClick={() => openModal(uploadMonth, "uploadMonth")}
             style={{ width: "100%" }}
           >
             Aumentar Barra de Progreso
@@ -410,7 +605,7 @@ export default function AdminPage() {
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
           <button
             className="admin-button btn-danger"
-            onClick={() => openModal(resetAll)}
+            onClick={() => openModal(resetAll, "resetAll")}
             style={{ flex: 1 }}
           >
             Reiniciar Sistema Completo
@@ -426,65 +621,130 @@ export default function AdminPage() {
         </div>
 
         {showGoalForm && (
-          <div className="section-box">
-            <h4>Actualizar Meta</h4>
-            <input
-              type="text"
-              placeholder="Nueva meta"
+        <div className="section-box" style={{ marginTop: "20px" }}>
+          <h4 style={{ marginBottom: "15px", color: "#fff" }}>Actualizar Meta</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <CurrencyInput
+              value={newGoal}
+              onChange={setNewGoal}
+              placeholder="Nueva meta en USD $"
               className="admin-input"
-              style={{ width: "100%", marginBottom: "10px" }}
-              value={formatNumber(newGoal)}
-              onChange={(e) => {
-                const raw = unformatNumber(e.target.value)
-                if (/^\d*$/.test(raw)) {
-                  setNewGoal(raw)
-                }
+              style={{ 
+                width: "100%", 
+                padding: "10px",
+                fontSize: "16px",
+                boxSizing: "border-box"
               }}
             />
             <input
               type="password"
-              placeholder="Contraseña meta"
+              placeholder="Contraseña"
               className="admin-input"
-              style={{ width: "100%", marginBottom: "10px" }}
+              style={{ 
+                width: "100%", 
+                padding: "10px",
+                fontSize: "16px",
+                boxSizing: "border-box"
+              }}
               value={goalPassword}
               onChange={(e) => setGoalPassword(e.target.value)}
             />
             <button
               className="admin-button btn-primary"
               onClick={updateGoal}
-              style={{ width: "100%" }}
+              style={{ 
+                width: "100%", 
+                padding: "10px",
+                fontSize: "16px",
+                marginTop: "5px"
+              }}
             >
               Guardar Meta
             </button>
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       {modalVisible && (
         <div className="modal-overlay" onClick={() => setModalVisible(false)}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {modalAction === resetTemp
-                ? "Eliminar acumulado (irreversible)"
-                : modalAction === resetAll
-                ? "Reiniciar todo el sistema (irreversible)"
-                : "Ingrese contraseña"}
-            </h3>
+            {/* Encabezado con ícono y título de la acción */}
+            <div style={{
+              textAlign: "center",
+              marginBottom: "20px",
+              paddingBottom: "15px",
+              borderBottom: `2px solid ${actionInfo.color}`
+            }}>
+              <div style={{ fontSize: "48px", marginBottom: "10px" }}>
+                {actionInfo.icon}
+              </div>
+              <h2 style={{ 
+                margin: 0, 
+                color: actionInfo.color,
+                fontSize: "24px"
+              }}>
+                {actionInfo.title}
+              </h2>
+            </div>
 
-            <input
-              type="password"
-              className="admin-input"
-              style={{ width: "100%", margin: "15px 0" }}
-              placeholder="Contraseña de administrador"
-              value={modalPassword}
-              onChange={(e) => setModalPassword(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && confirmModal()}
-              autoFocus
-            />
+            {/* Mensaje descriptivo de la acción */}
+            <div style={{
+              backgroundColor: "rgba(0,0,0,0.05)",
+              padding: "12px",
+              borderRadius: "6px",
+              marginBottom: "20px",
+              textAlign: "center"
+            }}>
+              <p style={{ 
+                margin: 0, 
+                fontSize: "14px", 
+                color: "#c7c6c6",
+                lineHeight: "1.5"
+              }}>
+                {actionInfo.message}
+              </p>
+            </div>
 
-            <div className="modal-buttons">
+            {/* Campo de contraseña */}
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: "600",
+                color: "#f1f1f1"
+              }}>
+                Contraseña de administrador
+              </label>
+              <input
+                type="password"
+                className="admin-input"
+                style={{ width: "100%", margin: "15px -15px" }}
+                placeholder="Ingrese su contraseña"
+                value={modalPassword}
+                onChange={(e) => setModalPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && confirmModal()}
+                autoFocus
+              />
+            </div>
+
+            {/* Botones de acción */}
+            <div className="modal-buttons" style={{
+              display: "flex",
+              gap: "10px",
+              justifyContent: "center"
+            }}>
               <button
-                className="admin-button btn-primary"
+                className="admin-button"
+                style={{
+                  backgroundColor: actionInfo.color,
+                  color: "white",
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  flex: 1
+                }}
                 onClick={confirmModal}
               >
                 Confirmar
@@ -492,6 +752,10 @@ export default function AdminPage() {
 
               <button
                 className="admin-button btn-danger"
+                style={{
+                  padding: "10px 20px",
+                  flex: 1
+                }}
                 onClick={() => setModalVisible(false)}
               >
                 Cancelar

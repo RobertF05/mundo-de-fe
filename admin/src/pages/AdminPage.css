@@ -57,7 +57,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  background: linear-gradient(90deg, #fdfdfd, #d6d6d6);
   transition: width 0.4s ease;
 }
 
@@ -176,7 +176,7 @@ hr {
 .system-message.success {
   background: #5a5a5a;
   color: #ffffff;
-  border-left: 4px solid #4caf50;
+  border-left: 4px solid #ffffff;
 }
 
 .system-message.error {

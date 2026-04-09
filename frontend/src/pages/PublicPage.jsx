@@ -4,6 +4,23 @@ import logo from "../../public/logo-gris.png"
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// Función para formatear números como moneda (siempre con comas de miles y punto decimal)
+const formatCurrency = (value) => {
+  if (value === null || value === undefined) return "0.00"
+  
+  // Convertir a número
+  let numValue = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value
+  
+  if (isNaN(numValue)) return "0.00"
+  
+  // Formatear con 2 decimales, usando siempre punto para decimal y comas para miles
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true
+  })
+}
+
 export default function PublicPage() {
   const [total, setTotal] = useState(0)
   const [goal, setGoal] = useState(1)
@@ -48,10 +65,10 @@ export default function PublicPage() {
 
         <div className="info-box">
           <div className="info-top">
-            META: ${goal.toLocaleString()}
+            META: ${formatCurrency(goal)}
           </div>
           <div className="info-bottom">
-            RECAUDADO: ${total.toLocaleString()}
+            RECAUDADO: ${formatCurrency(total)}
           </div>
         </div>
       </div>
